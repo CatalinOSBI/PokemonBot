@@ -31,22 +31,23 @@ def take_screenshot(screenshot_folder, left, top, width, height):
     print(extracted_text)                                                      
                                                                                                       
     # Debugging Image                                                                                   
-    print("Image Size:", preprocessed_image.size)                                                   
-    print("Thresholded Image:")                                                                     
-    preprocessed_image.show()                                                                       
+    # print("Image Size:", preprocessed_image.size)                                                   
+    # print("Thresholded Image:")                                                                     
+    # preprocessed_image.show()                                                                       
                                                                                                       
-    # Delete the Image                
-    os.remove(filepath)                                                                               
+    # Delete the Image
+    os.remove(filepath)   
+
+    return extracted_text                                                                            
                                                                            
 screenshot_folder = r'D:\Visual Studio Code\Projects\Pokemon\TheScreenshots'                          
                                                                                                       
-# Specify the coordinates and dimensions of the screen region to capture                              
+# Specify the coordinates and dimensions of the screen region to capture  
+# This is for 2560x1440                             
 left = 1430  # X-coordinate of the top-left corner of the region                                     
 top = 512   # Y-coordinate of the top-left corner of the region                                       
 width = 250 # Width of the region        
-height = 25 # Height of the region                                                                    
-                
-take_screenshot(screenshot_folder, left, top, width, height)                                        
+height = 25 # Height of the region                                       
 
 #####################################################
 
@@ -84,18 +85,26 @@ while running:
       print('Button Visible!')
       buttonPosition = pyautogui.locateCenterOnScreen('FightButton.PNG')
 
-      pyautogui.click(buttonPosition)
-      time.sleep(0.3)
-      pyautogui.click()
-      pyautogui.moveTo(1100,500)
+      #Take Screenshot and store pokemon name
+      pokemon_name = take_screenshot(screenshot_folder, left, top, width, height)  
+
+      if 'Ekans' in pokemon_name :
+        #Stop
+        running = False 
+      else:
+        #Fight
+        pyautogui.click(buttonPosition)
+        time.sleep(0.3)
+        pyautogui.click()
+        pyautogui.moveTo(1100,500)
 
   except pyautogui.ImageNotFoundException:
 
     # While Not Fighting
 
     print('Image not found on the screen')
-    hold_key_down('a',0)    
-    hold_key_down('d',0) 
+    hold_key_down('a',1)    
+    hold_key_down('d',1) 
 
 print("Script stopped.")    
 
