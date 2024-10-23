@@ -5,6 +5,7 @@ import os
 from PIL import Image
 import time
 import keyboard
+from random import uniform
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files (x86)\Tesseract-OCR\tesseract.exe'
 
 ##################################################
@@ -87,24 +88,23 @@ while running:
 
       #Take Screenshot and store pokemon name
       pokemon_name = take_screenshot(screenshot_folder, left, top, width, height)  
-
-      if 'Ekans' in pokemon_name :
+      if 'Joltik' in pokemon_name or 'Rotom' in pokemon_name or 'Noibat' in pokemon_name or 'Spiritomb' in pokemon_name or 'Yveltal' in pokemon_name :
         #Stop
         running = False 
       else:
         #Fight
-        pyautogui.click(buttonPosition)
-        time.sleep(0.3)
-        pyautogui.click()
-        pyautogui.moveTo(1100,500)
+        hold_key_down('1',0)
+        time.sleep(0.5)
+        hold_key_down('1',0)
 
   except pyautogui.ImageNotFoundException:
 
     # While Not Fighting
+    randomFloat = uniform(0, 1)
 
     print('Image not found on the screen')
-    hold_key_down('a',1)    
-    hold_key_down('d',1) 
+    hold_key_down('a', randomFloat)    
+    hold_key_down('d', randomFloat) 
 
 print("Script stopped.")    
 
