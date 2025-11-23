@@ -88,23 +88,30 @@ while running:
 
       #Take Screenshot and store pokemon name
       pokemon_name = take_screenshot(screenshot_folder, left, top, width, height)  
-      if 'Joltik' in pokemon_name or 'Rotom' in pokemon_name or 'Noibat' in pokemon_name or 'Spiritomb' in pokemon_name or 'Yveltal' in pokemon_name :
+      viable_pokemon = {"Snorlax",
+                        "Rotom",
+                        "Noibat",
+                        "Spiritomb",
+                        "Yveltal",
+                       }
+      
+      if any(poke in pokemon_name for poke in viable_pokemon):
         #Stop
         running = False 
       else:
         #Fight
-        hold_key_down('1',0)
+        hold_key_down('1',0) 
         time.sleep(0.5)
         hold_key_down('1',0)
 
   except pyautogui.ImageNotFoundException:
 
     # While Not Fighting
-    randomFloat = uniform(0, 1)
+    random_float = uniform(0, 1)
 
     print('Image not found on the screen')
-    hold_key_down('a', randomFloat)    
-    hold_key_down('d', randomFloat) 
+    hold_key_down('a', random_float)    
+    hold_key_down('d', random_float) 
 
 print("Script stopped.")    
 
