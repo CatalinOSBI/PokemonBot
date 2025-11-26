@@ -43,12 +43,18 @@ def take_screenshot(screenshot_folder, left, top, width, height):
                                                                            
 screenshot_folder = r'D:\Visual Studio Code\Projects\Pokemon\TheScreenshots'                          
                                                                                                       
-# Specify the coordinates and dimensions of the screen region to capture  
+# Screen Settings 
 # This is for 2560x1440                             
 left = 1430  # X-coordinate of the top-left corner of the region                                     
 top = 512   # Y-coordinate of the top-left corner of the region                                       
 width = 250 # Width of the region        
-height = 25 # Height of the region                                       
+height = 25 # Height of the region  
+
+# This is for 1920x1080 
+# left = 1123  # X-coordinate of the top-left corner of the region                                     
+# top = 358   # Y-coordinate of the top-left corner of the region                                       
+# width = 250 # Width of the region
+# height = 29 # Height of the region                                      
 
 #####################################################
 
