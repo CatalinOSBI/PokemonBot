@@ -9,6 +9,25 @@ from random import uniform
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files (x86)\Tesseract-OCR\tesseract.exe'
 
 ##################################################
+# Log Pokemon
+def log_pokemon(pokemon_name, log_file='log.txt'):
+  timestamp = datetime.now().strftime('%d/%m/%Y %H:%M')
+  log_entry = f"~{pokemon_name}~ - {timestamp}\n"
+    
+  with open(log_file, 'a', encoding='utf-8') as file:
+    file.write(log_entry)
+
+##################################################
+# Special encounter logic
+def special_encounter():
+    try:
+        if pyautogui.locateOnScreen('SpecialEncounter.PNG', confidence=0.7):
+            print('Special Encounter!')
+            return True
+    except:
+        pass
+    return False
+##################################################
 # Pokemon recognition system                                                                          
 def take_screenshot(screenshot_folder, left, top, width, height):                                     
                                                                                                       
@@ -21,11 +40,11 @@ def take_screenshot(screenshot_folder, left, top, width, height):
     screenshot.save(filepath)                                                                         
                                                                                                       
     # Preprocess image (convert to grayscale and apply thresholding)                                  
-    preprocessed_image = Image.open(filepath).convert('L')  # Convert to grayscale                    
-    preprocessed_image = preprocessed_image.point(lambda x: 0 if x < 128 else 255)                    
+    # preprocessed_image = Image.open(filepath).convert('L')  # Convert to grayscale                    
+    preprocessed_image = Image.open(filepath).point(lambda x: 0 if x < 128 else 255)                    
                                                                                                       
     # Use pytesseract to perform OCR and extract text                                                 
-    extracted_text = pytesseract.image_to_string(preprocessed_image, lang='eng', config='--psm 6')
+    extracted_text = pytesseract.image_to_string(preprocessed_image, lang='eng', config='--psm 7')
                                                                                                       
     # Print the extracted text                                                                        
     print("Extracted Text:")                                                                          
@@ -39,9 +58,7 @@ def take_screenshot(screenshot_folder, left, top, width, height):
     # Delete the Image
     os.remove(filepath)   
 
-    return extracted_text                                                                            
-                                                                           
-screenshot_folder = r'D:\Visual Studio Code\Projects\Pokemon\TheScreenshots'                          
+    return extracted_text                                                                                                     
                                                                                                       
 # Screen Settings 
 # This is for 2560x1440                             
@@ -63,8 +80,7 @@ height = 25 # Height of the region
 
 def hold_key_down(key, duration):
     
-    # Vars
-    
+    #Vars
     keyboard.press(key)
     time.sleep(duration)
     keyboard.release(key)
@@ -74,6 +90,11 @@ def hold_key_down(key, duration):
 #####################################################
 # Main Loop 
 
+#Settings
+avoid_elites = True
+log = True
+screenshot_folder = './TheScreenshots' 
+ 
 running = True
 def on_key_release(event):
     global running
@@ -85,25 +106,32 @@ keyboard.on_release(on_key_release)
 
 while running:
   try:
-    if pyautogui.locateOnScreen('FightButton.PNG') :
+    if pyautogui.locateOnScreen('FightButton.PNG', confidence=0.7) :
 
       # While Fighting
 
       print('Button Visible!')
-      buttonPosition = pyautogui.locateCenterOnScreen('FightButton.PNG')
 
       #Take Screenshot and store pokemon name
-      pokemon_name = take_screenshot(screenshot_folder, left, top, width, height)  
-      viable_pokemon = {"Snorlax",
-                        "Rotom",
-                        "Noibat",
-                        "Spiritomb",
-                        "Yveltal",
+      pokemon_name = take_screenshot(screenshot_folder, left, top, width, height) 
+      is_elite="[E]" in pokemon_name  
+      viable_pokemon = {"[S]",
+                        "Rhyhorn",
+                        "horn",
+                        "yho",
                        }
+      #Log Pokemon
+      if log:
+        log_pokemon(pokemon_name)     
       
-      if any(poke in pokemon_name for poke in viable_pokemon):
+      if any(poke in pokemon_name for poke in viable_pokemon) or special_encounter():
         #Stop
-        running = False 
+        running = False  
+        
+      elif is_elite and avoid_elites:
+        #Run
+        hold_key_down('4',0)  
+
       else:
         #Fight
         hold_key_down('1',0) 
