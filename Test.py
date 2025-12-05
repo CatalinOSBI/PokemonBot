@@ -20,8 +20,18 @@ def log_pokemon(pokemon_name, log_file='log.txt'):
 # Special encounter logic
 def special_encounter():
     try:
-        if pyautogui.locateOnScreen('SpecialEncounter.png', confidence=0.7):
+        if pyautogui.locateOnScreen('Images/SpecialEncounter.png', confidence=0.7):
             print('Special Encounter!')
+            return True
+    except:
+        pass
+    return False
+##################################################
+# Fight Button recognition
+def fight_button():
+    try:
+        if pyautogui.locateOnScreen('Images/FightButton.PNG', confidence=0.7):
+            print('Fight In Progress, not healing!')
             return True
     except:
         pass
@@ -71,6 +81,32 @@ def choose_move():
   else:
     #Use first move
     hold_key_down('1',0)  
+##################################################
+def heal():
+  if auto_heal:
+    x = 897
+    y = 152
+    #Healthy
+    if pyautogui.pixel(x,y) == (165, 65, 66):
+      # print("Lead Healthy!")
+      pass
+    else:
+      try:
+        #Not Healthy
+        while pyautogui.pixel(x,y) != (165, 65, 66) and not fight_button():
+          potion_position = pyautogui.locateCenterOnScreen('Images/Potion.png', confidence=0.8)
+          if potion_position:
+            print('Healing Pokemon!')
+            print('Potion Found!')
+            offset_x = 30
+            pyautogui.moveTo(potion_position.x + offset_x, potion_position.y)
+            time.sleep(0.2)
+            pyautogui.click(potion_position.x + offset_x, potion_position.y)
+            pyautogui.moveTo(x,y)
+            time.sleep(0.2)
+            pyautogui.click(x,y)
+      except:
+        pass
 ##################################################
 # Pokemon recognition system                                                                          
 def take_screenshot(screenshot_folder, left, top, width, height):                                     
@@ -128,6 +164,7 @@ def hold_key_down(key, duration):
 # Main Loop 
 
 #Settings
+auto_heal = True
 auto_move = True
 avoid_elites = True
 log = True
@@ -144,7 +181,7 @@ keyboard.on_release(on_key_release)
 
 while running:
   try:
-    if pyautogui.locateOnScreen('FightButton.PNG', confidence=0.7) :
+    if pyautogui.locateOnScreen('Images/FightButton.PNG', confidence=0.7) :
 
       # While Fighting
       print('Button Visible!')
@@ -155,11 +192,21 @@ while running:
 
       #Take Screenshot and store pokemon namesw
       pokemon_name = take_screenshot(screenshot_folder, left, top, width, height) 
-      is_elite="[E]" in pokemon_name or "Tentacruel" in pokemon_name or "enta" in pokemon_name
+      is_elite="[E]" in pokemon_name or "[" in pokemon_name or "]" in pokemon_name
+      avoidable_pokemon = {"Golbat",
+                           "Drifloon",
+                           "Shuppet",
+                           "Noctowl"
+                           }
       viable_pokemon = {"[S]",
-                        "Mudkip",
-                        "udk",
-                        "kip",
+                        "Duskull",
+                        "usk",
+                        "ull",
+                        "Litwick",
+                        "wic",
+                        "Elgyem",
+                        "y",
+                        "lgy"
                        }
       #Log Pokemon
       if log:
@@ -169,7 +216,7 @@ while running:
         #Stop
         running = False  
         
-      elif is_elite and avoid_elites:
+      elif (is_elite and avoid_elites) or any(poke in pokemon_name for poke in avoidable_pokemon):
         #Run
         hold_key_down('4',0)
         #Resume Runing  
@@ -183,13 +230,15 @@ while running:
         running = True
 
   except pyautogui.ImageNotFoundException:
+    #Heal
+    heal()
 
     #Wander around
     random_float = uniform(0, 1)
 
-    print('Image not found on the screen')
-    hold_key_down('w', random_float)    
-    hold_key_down('s', random_float) 
+    # print('Image not found on the screen')
+    hold_key_down('a', random_float)    
+    hold_key_down('d', random_float) 
 
 print("Script stopped.")    
 
