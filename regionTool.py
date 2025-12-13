@@ -4,8 +4,9 @@ class RegionSelector:
     def __init__(self):
         self.root = tk.Tk()
         self.root.attributes('-fullscreen', True)
-        self.root.attributes('-alpha', 0.3)
         self.root.attributes('-topmost', True)
+        self.root.wait_visibility(self.root)
+        self.root.attributes('-alpha', 0.3)
         
         self.canvas = tk.Canvas(self.root, cursor="cross", bg='grey')
         self.canvas.pack(fill=tk.BOTH, expand=True)
