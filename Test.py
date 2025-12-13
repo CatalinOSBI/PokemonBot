@@ -6,7 +6,8 @@ from PIL import Image
 import time
 import keyboard
 from random import uniform
-pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files (x86)\Tesseract-OCR\tesseract.exe'
+from notifcation import phone_alert
+# pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files (x86)\Tesseract-OCR\tesseract.exe'
 
 ##################################################
 # Log Pokemon
@@ -16,26 +17,25 @@ def log_pokemon(pokemon_name, log_file='log.txt'):
     
   with open(log_file, 'a', encoding='utf-8') as file:
     file.write(log_entry)
-##################################################
-# Special encounter logic
-def special_encounter():
+################################################## 'Images/SpecialEncounter.png 'Special Encounter!'
+# Image Recognition logic
+def image_recognition(image_path: str, log_msg: str, region=None):
     try:
-        if pyautogui.locateOnScreen('Images/SpecialEncounter.png', confidence=0.7):
-            print('Special Encounter!')
+        if pyautogui.locateOnScreen(image_path, confidence=0.7, region=region):
+            print(log_msg)
             return True
     except:
         pass
     return False
 ##################################################
-# Fight Button recognition
-def fight_button():
-    try:
-        if pyautogui.locateOnScreen('Images/FightButton.PNG', confidence=0.7):
-            print('Fight In Progress, not healing!')
-            return True
-    except:
-        pass
-    return False
+# Alert
+def send_alert():
+  global running
+    
+  if image_recognition('Images/confirm.png', "ALERT"):
+    phone_alert()
+    hold_key_down('i',0)
+    running = False
 ##################################################
 # Choosing effective move logic
 def choose_move():
@@ -88,12 +88,11 @@ def heal():
     y = 152
     #Healthy
     if pyautogui.pixel(x,y) == (165, 65, 66):
-      # print("Lead Healthy!")
       pass
     else:
       try:
         #Not Healthy
-        while pyautogui.pixel(x,y) != (165, 65, 66) and not fight_button():
+        while pyautogui.pixel(x,y) != (165, 65, 66) and not image_recognition('Images/FightButton.PNG','Fight In Progress, not healing!'):
           potion_position = pyautogui.locateCenterOnScreen('Images/Potion.png', confidence=0.8)
           if potion_position:
             print('Healing Pokemon!')
@@ -106,6 +105,7 @@ def heal():
             time.sleep(0.2)
             pyautogui.click(x,y)
       except:
+        print('Potion Not Found!')
         pass
 ##################################################
 # Pokemon recognition system                                                                          
@@ -147,8 +147,8 @@ width = 250 # Width of the region
 height = 25 # Height of the region  
 
 # This is for 1920x1080 
-# left = 1123  # X-coordinate of the top-left corner of the region                                     
-# top = 358   # Y-coordinate of the top-left corner of the region                                       
+# left = 1116  # X-coordinate of the top-left corner of the region                                     
+# top = 319   # Y-coordinate of the top-left corner of the region                                       
 # width = 250 # Width of the region
 # height = 29 # Height of the region                                      
 
@@ -164,7 +164,7 @@ def hold_key_down(key, duration):
 # Main Loop 
 
 #Settings
-auto_heal = True
+auto_heal = False
 auto_move = True
 avoid_elites = True
 log = True
@@ -180,56 +180,42 @@ def on_key_release(event):
 keyboard.on_release(on_key_release)
 
 while running:
-  try:
-    if pyautogui.locateOnScreen('Images/FightButton.PNG', confidence=0.7) :
+  if image_recognition('Images/FightButton.PNG', 'Button Visible!', region=(1088, 856, 250 ,90)) :
 
-      # While Fighting
-      print('Button Visible!')
-      
-      #Stop Running
-      running = False
-      pyautogui.moveTo(1100,500)
+    # While Fighting
+    pyautogui.moveTo(1100,500)
 
-      #Take Screenshot and store pokemon namesw
-      pokemon_name = take_screenshot(screenshot_folder, left, top, width, height) 
-      is_elite="[E]" in pokemon_name or "[" in pokemon_name or "]" in pokemon_name
-      avoidable_pokemon = {"Golbat",
-                           "Drifloon",
-                           "Shuppet",
-                           "Noctowl"
-                           }
-      viable_pokemon = {"[S]",
-                        "Duskull",
-                        "usk",
-                        "ull",
-                        "Litwick",
-                        "wic",
-                        "Elgyem",
-                        "y",
-                        "lgy"
-                       }
-      #Log Pokemon
-      if log:
-        log_pokemon(pokemon_name)     
+    #Take Screenshot and store pokemon namesw
+    pokemon_name = take_screenshot(screenshot_folder, left, top, width, height) 
+    is_elite="[E]" in pokemon_name or "[" in pokemon_name or "]" in pokemon_name
+    avoidable_pokemon = {
+                        }
+    viable_pokemon = {"[S]",
+                      "Zapdos",
+                      "dos",
+                      "d",
+                     }
+    #Log Pokemon
+    if log:
+      log_pokemon(pokemon_name)     
       
-      if any(poke in pokemon_name for poke in viable_pokemon) or special_encounter():
-        #Stop
-        running = False  
+    if any(poke in pokemon_name for poke in viable_pokemon) or image_recognition('Images/SpecialEncounter.png', 'Special Encounter!'):
+      #Stop
+      running = False  
         
-      elif (is_elite and avoid_elites) or any(poke in pokemon_name for poke in avoidable_pokemon):
-        #Run
-        hold_key_down('4',0)
-        #Resume Runing  
-        running = True
+    elif (is_elite and avoid_elites) or any(poke in pokemon_name for poke in avoidable_pokemon):
+      #Run
+      hold_key_down('4',0)
 
-      else:
-        #Fight
-        hold_key_down('1',0)
-        choose_move()
-        #Resume Runing
-        running = True
+    else:
+      #Fight
+      hold_key_down('1',0)
+      choose_move()
 
-  except pyautogui.ImageNotFoundException:
+  else:
+    #Alert
+    send_alert()
+    
     #Heal
     heal()
 
