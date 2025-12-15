@@ -6,13 +6,13 @@ from PIL import Image
 import time
 import keyboard
 from random import uniform
-from notifcation import phone_alert
+from notification import phone_alert, phone_alert_encounter
 # pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files (x86)\Tesseract-OCR\tesseract.exe'
 
 ##################################################
 # Log Pokemon
 def log_pokemon(pokemon_name, log_file='log.txt'):
-  timestamp = datetime.now().strftime('%d/%m/%Y %H:%M')
+  timestamp = datetime.now().strftime('%Hh-%Mm-%Ssec')
   log_entry = f"~{pokemon_name}~ - {timestamp}\n"
     
   with open(log_file, 'a', encoding='utf-8') as file:
@@ -32,7 +32,7 @@ def image_recognition(image_path: str, log_msg: str, region=None):
 def send_alert():
   global running
     
-  if image_recognition('Images/confirm.png', "ALERT"):
+  if image_recognition('Images/confirm.png', "ALERT", region=(692, 394, 543, 341)):
     phone_alert()
     hold_key_down('i',0)
     running = False
@@ -84,15 +84,15 @@ def choose_move():
 ##################################################
 def heal():
   if auto_heal:
-    x = 897
-    y = 152
+    x = 583
+    y = 122
     #Healthy
-    if pyautogui.pixel(x,y) == (165, 65, 66):
+    if pyautogui.pixel(x,y) == (155, 65, 65):
       pass
     else:
       try:
         #Not Healthy
-        while pyautogui.pixel(x,y) != (165, 65, 66) and not image_recognition('Images/FightButton.PNG','Fight In Progress, not healing!'):
+        while pyautogui.pixel(x,y) != (155, 65, 65) and not image_recognition('Images/FightButton.PNG','Fight In Progress, not healing!'):
           potion_position = pyautogui.locateCenterOnScreen('Images/Potion.png', confidence=0.8)
           if potion_position:
             print('Healing Pokemon!')
@@ -164,7 +164,7 @@ def hold_key_down(key, duration):
 # Main Loop 
 
 #Settings
-auto_heal = False
+auto_heal = True
 auto_move = True
 avoid_elites = True
 log = True
@@ -180,7 +180,7 @@ def on_key_release(event):
 keyboard.on_release(on_key_release)
 
 while running:
-  if image_recognition('Images/FightButton.PNG', 'Button Visible!', region=(1088, 856, 250 ,90)) :
+  if image_recognition('Images/FightButton.PNG', 'Button Visible!', region=(761, 657, 144 ,54)) :
 
     # While Fighting
     pyautogui.moveTo(1100,500)
@@ -191,9 +191,8 @@ while running:
     avoidable_pokemon = {
                         }
     viable_pokemon = {"[S]",
-                      "Zapdos",
-                      "dos",
-                      "d",
+                      "Xerneas",
+                      "ern",
                      }
     #Log Pokemon
     if log:
@@ -201,7 +200,8 @@ while running:
       
     if any(poke in pokemon_name for poke in viable_pokemon) or image_recognition('Images/SpecialEncounter.png', 'Special Encounter!'):
       #Stop
-      running = False  
+      running = False
+      phone_alert_encounter()  
         
     elif (is_elite and avoid_elites) or any(poke in pokemon_name for poke in avoidable_pokemon):
       #Run
