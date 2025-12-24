@@ -2,22 +2,64 @@ import pyautogui
 import pytesseract
 from datetime import datetime
 import os
+import json
 from PIL import Image
 import time
 import keyboard
-from random import uniform
+import random
 from notification import phone_alert, phone_alert_encounter
-# pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files (x86)\Tesseract-OCR\tesseract.exe'
+from setup import initial_setup
+pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files (x86)\Tesseract-OCR\tesseract.exe'
+
+########################SETUP#####################
+initial_setup()
+config = json.load(open("config.json", "r", encoding="utf-8"))
+#VARS
+fight_region =(config["images"]["fight"]["x"],
+               config["images"]["fight"]["y"],
+               config["images"]["fight"]["width"],
+               config["images"]["fight"]["height"]
+               )
+confirm_region=(config["images"]["confirm"]["x"],
+                config["images"]["confirm"]["y"],
+                config["images"]["confirm"]["width"],
+                config["images"]["confirm"]["height"]
+                )
+turn_region=(config["images"]["turn"]["x"],
+             config["images"]["turn"]["y"],
+             config["images"]["turn"]["width"],
+             config["images"]["turn"]["height"]
+            )
+poke_region=(config["images"]["poke_name"]["x"],
+             config["images"]["poke_name"]["y"],
+             config["images"]["poke_name"]["width"],
+             config["images"]["poke_name"]["height"]
+            )
+heal_region=(config["pixels"]["heal"]["x"],
+             config["pixels"]["heal"]["y"],
+            )
+heal_rgb=(config["pixels"]["heal"]["R"],
+          config["pixels"]["heal"]["G"],
+          config["pixels"]["heal"]["B"],          
+         )
+
+#Settings
+auto_heal = config["settings"]["auto_heal"]
+auto_move = config["settings"]["auto_move"]
+avoid_elites = config["settings"]["avoid_elites"]
+log = config["settings"]["log"]
+screenshot_folder = config["settings"]["screenshot_folder"] 
 
 ##################################################
 # Log Pokemon
 def log_pokemon(pokemon_name, log_file='log.txt'):
   timestamp = datetime.now().strftime('%Hh-%Mm-%Ssec')
+  pokemon_name= pokemon_name.strip()
   log_entry = f"~{pokemon_name}~ - {timestamp}\n"
     
   with open(log_file, 'a', encoding='utf-8') as file:
     file.write(log_entry)
-################################################## 'Images/SpecialEncounter.png 'Special Encounter!'
+##################################################
 # Image Recognition logic
 def image_recognition(image_path: str, log_msg: str, region=None):
     try:
@@ -32,7 +74,7 @@ def image_recognition(image_path: str, log_msg: str, region=None):
 def send_alert():
   global running
     
-  if image_recognition('Images/confirm.png', "ALERT", region=(692, 394, 543, 341)):
+  if image_recognition('Images/confirm.png', "ALERT", region=confirm_region):
     phone_alert()
     hold_key_down('i',0)
     running = False
@@ -84,15 +126,13 @@ def choose_move():
 ##################################################
 def heal():
   if auto_heal:
-    x = 583
-    y = 122
     #Healthy
-    if pyautogui.pixel(x,y) == (155, 65, 65):
+    if pyautogui.pixel(heal_region[0],heal_region[1]) == heal_rgb:
       pass
     else:
       try:
         #Not Healthy
-        while pyautogui.pixel(x,y) != (155, 65, 65) and not image_recognition('Images/FightButton.PNG','Fight In Progress, not healing!'):
+        while pyautogui.pixel(heal_region[0],heal_region[1]) != heal_rgb and not image_recognition('Images/Turn.png','Fight In Progress - not healing!',region=turn_region):
           potion_position = pyautogui.locateCenterOnScreen('Images/Potion.png', confidence=0.8)
           if potion_position:
             print('Healing Pokemon!')
@@ -101,9 +141,9 @@ def heal():
             pyautogui.moveTo(potion_position.x + offset_x, potion_position.y)
             time.sleep(0.2)
             pyautogui.click(potion_position.x + offset_x, potion_position.y)
-            pyautogui.moveTo(x,y)
+            pyautogui.moveTo(heal_region[0],heal_region[1])
             time.sleep(0.2)
-            pyautogui.click(x,y)
+            pyautogui.click(heal_region[0],heal_region[1])
       except:
         print('Potion Not Found!')
         pass
@@ -125,10 +165,9 @@ def take_screenshot(screenshot_folder, left, top, width, height):
                                                                                                       
     # Use pytesseract to perform OCR and extract text                                                 
     extracted_text = pytesseract.image_to_string(preprocessed_image, lang='eng', config='--psm 7 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz[]')
-                                                                                                      
-    # Print the extracted text                                                                        
+                                                                                                                                                                          
     print("Extracted Text:")                                                                
-    print(f"~{extracted_text}~")                                                      
+    print(f"~{extracted_text.strip()}~")                                                      
                                                                                                       
     # Debugging Image                                                                                                                                                     
     # preprocessed_image.show()                                                                       
@@ -137,38 +176,60 @@ def take_screenshot(screenshot_folder, left, top, width, height):
     os.remove(filepath)   
 
     return extracted_text
-##################################################                                                                                                       
-                                                                                                      
-# Screen Settings 
-# This is for 2560x1440                             
-left = 1430  # X-coordinate of the top-left corner of the region                                     
-top = 512   # Y-coordinate of the top-left corner of the region                                       
-width = 250 # Width of the region        
-height = 25 # Height of the region  
-
-# This is for 1920x1080 
-# left = 1116  # X-coordinate of the top-left corner of the region                                     
-# top = 319   # Y-coordinate of the top-left corner of the region                                       
-# width = 250 # Width of the region
-# height = 29 # Height of the region                                      
-
-#####################################################
+##################################################
 # Key Hold Function
+
+#Special
+def wander(duration, mode="left_right" ,check_interval=0.1):
+  
+#Wandering mode
+  if mode == "left_right":
+    button1 = 'a'
+    button2 = 'd'
+  else:
+    button1 = "w"
+    button2 = "s"  
+  
+#First Button
+  keyboard.press(button1)
+  start_time = time.time()
+    
+  while time.time() - start_time < duration:
+      # Check if fightbutton is there while moving
+      if image_recognition('Images/FightButton.PNG',"", region=fight_region):
+          keyboard.release(button1)
+          return True
+        
+      # Throttle
+      time.sleep(check_interval)
+    
+  keyboard.release(button1)
+    
+#Second Button
+  keyboard.press(button2)
+  start_time = time.time()
+    
+  while time.time() - start_time < duration:
+      # Check if fightbutton is there while moving
+      if image_recognition('Images/FightButton.PNG',"", region=fight_region):
+          keyboard.release(button2)
+          return True
+        
+      # Throttle
+      time.sleep(check_interval)
+    
+  keyboard.release(button2)    
+  return False
+
+#Normal  
 def hold_key_down(key, duration):
     
-    #Vars
-    keyboard.press(key)
-    time.sleep(duration)
-    keyboard.release(key)
+  #Vars
+  keyboard.press(key)
+  time.sleep(duration)
+  keyboard.release(key)
 #####################################################
 # Main Loop 
-
-#Settings
-auto_heal = True
-auto_move = True
-avoid_elites = True
-log = True
-screenshot_folder = './TheScreenshots' 
  
 running = True
 def on_key_release(event):
@@ -180,13 +241,13 @@ def on_key_release(event):
 keyboard.on_release(on_key_release)
 
 while running:
-  if image_recognition('Images/FightButton.PNG', 'Button Visible!', region=(761, 657, 144 ,54)) :
+  if image_recognition('Images/FightButton.PNG', 'Button Visible!', fight_region) :
 
     # While Fighting
     pyautogui.moveTo(1100,500)
 
-    #Take Screenshot and store pokemon namesw
-    pokemon_name = take_screenshot(screenshot_folder, left, top, width, height) 
+    #Take Screenshot and store pokemon names
+    pokemon_name = take_screenshot(screenshot_folder, poke_region[0], poke_region[1], poke_region[2], poke_region[3]) 
     is_elite="[E]" in pokemon_name or "[" in pokemon_name or "]" in pokemon_name
     avoidable_pokemon = {
                         }
@@ -213,18 +274,19 @@ while running:
       choose_move()
 
   else:
-    #Alert
+    #Alertd
     send_alert()
     
     #Heal
     heal()
 
-    #Wander around
-    random_float = uniform(0, 1)
+    #Wander around 0.2682(2) 0.1341(1)
+    random_int = random.randint(1,6)
+    duration = 0.1341*random_int
 
     # print('Image not found on the screen')
-    hold_key_down('a', random_float)    
-    hold_key_down('d', random_float) 
+    if wander(duration, config["settings"]["mode"]):
+      continue #Reset main loop
 
 print("Script stopped.")    
 

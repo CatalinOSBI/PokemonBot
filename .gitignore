@@ -38,3 +38,5 @@ yarn-error.log*
 next-env.d.ts
 .pyc
 __pycache__
+config.json
+log.txt
